@@ -41,7 +41,8 @@ Google Drive-এ encrypted হয়ে সেভ হয়। যেকোন�
 
 ধাপ ২ — প্রতিটা PC-তে বসানো (কোনো ইনস্টল লাগবে না)
 ----------------------------------------------------
- 1. GitHub repo-র "Releases" থেকে সবচেয়ে নতুন YTProfileManager-windows.zip নামান।
+ 1. GitHub repo-র "Releases" থেকে সবচেয়ে নতুন YTProfileManager-full-windows.zip নামান
+    (নতুন PC-র জন্য "full" — এতে ব্রাউজার সহ সব আছে, প্রায় ১.৪ GB)।
  2. Unzip করে "YTProfileManager" ফোল্ডারটা কোথাও রাখুন (যেমন D:\YTProfileManager)।
  3. ধাপ ১-এর client_secret.json ফাইলটা YTProfileManager.exe-এর পাশে রাখুন।
  4. YTProfileManager.exe-এ ডান-ক্লিক → Send to → Desktop (create shortcut)।
@@ -120,5 +121,7 @@ Proxy যে ফরম্যাটে দেওয়া যাবে:
 
 আপডেট
 ------
- Releases থেকে নতুন zip নামিয়ে পুরনো ফোল্ডার বদলে দিন (client_secret.json রেখে দিন)।
+ যে PC-তে আগে থেকেই চলছে, সেখানে Releases থেকে ছোট
+ YTProfileManager-update-windows.zip নামান, আর পুরনো ফোল্ডারের ফাইলগুলো বদলে দিন
+ (client_secret.json রেখে দিন)। নতুন ভার্সনে ব্রাউজার বদলালে অ্যাপ নিজেই নামিয়ে নেবে।
  প্রোফাইলের ডাটা ফোল্ডারে থাকে না, তাই কিছুই হারাবে না। সব PC-তে একই ভার্সন রাখবেন।

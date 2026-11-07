@@ -35,84 +35,68 @@ jobs:
           python -c "from camoufox.fpgen_model import ensure_fpgen_model; ensure_fpgen_model()"
 
       - name: Build YTProfileManager.exe
-        run: >
-          pyinstaller --noconfirm --clean --windowed
-          --name YTProfileManager
-          --icon assets/icon.ico
-          --add-data "assets;assets"
-          --collect-all camoufox
-          --collect-all fpgen
-          --collect-all playwright
-          --collect-all language_tags
-          --collect-all ua_parser
-          --collect-all ua_parser_builtins
-          --collect-data googleapiclient
-          --collect-submodules keyring
-          --hidden-import keyring.backends.Windows
-          --hidden-import win32timezone
-          main.py
-
-      - name: Add browser bundle and guide
         shell: pwsh
         run: |
-          $out = "dist/YTProfileManager"
+          $docs = (python -c "import googleapiclient, os; print(os.path.join(os.path.dirname(googleapiclient.__file__), 'discovery_cache', 'documents'))").Trim()
+          pyinstaller --noconfirm --clean --windowed `
+            --name YTProfileManager `
+            --icon assets/icon.ico `
+            --add-data "assets;assets" `
+            --add-data "$docs\drive.v3.json;googleapiclient/discovery_cache/documents" `
+            --add-data "$docs\oauth2.v2.json;googleapiclient/discovery_cache/documents" `
+            --collect-all camoufox `
+            --collect-all fpgen `
+            --collect-all playwright `
+            --collect-all language_tags `
+            --collect-all ua_parser `
+            --collect-all ua_parser_builtins `
+            --collect-submodules keyring `
+            --hidden-import keyring.backends.Windows `
+            --hidden-import win32timezone `
+            main.py
+          Copy-Item GUIDE_BANGLA.txt dist/YTProfileManager/
+
+      - name: Keep the browser aside for the full package
+        shell: pwsh
+        run: |
           $inst = (python -c "from camoufox.pkgman import INSTALL_DIR; print(INSTALL_DIR)").Trim()
           $ver = (python -c "from camoufox.pkgman import installed_verstr; print(installed_verstr())").Trim()
-          New-Item -ItemType Directory -Force "$out/browser_bundle" | Out-Null
-          Copy-Item -Recurse $inst "$out/browser_bundle/camoufox"
-          Set-Content -NoNewline -Encoding ascii "$out/browser_bundle/bundle_id.txt" "$ver"
-          Copy-Item GUIDE_BANGLA.txt "$out/"
-          Write-Host "Browser $ver bundled from $inst"
+          New-Item -ItemType Directory -Force staging/browser_bundle | Out-Null
+          Move-Item $inst staging/browser_bundle/camoufox
+          Set-Content -NoNewline -Encoding ascii staging/browser_bundle/bundle_id.txt "$ver"
+          Write-Host "Browser $ver moved aside; this PC now has NO browser installed"
 
-      - name: Self-test the built exe (real browser, restart, cookies, child process)
+      - name: Self-test the built exe (downloads browser itself, real launch, restart, cookies, child process)
         shell: pwsh
         run: |
           $report = Join-Path $PWD "selftest.txt"
           $p = Start-Process "dist/YTProfileManager/YTProfileManager.exe" -ArgumentList "--selftest", "`"$report`"" -PassThru
-          if (-not $p.WaitForExit(600000)) { $p.Kill(); Write-Host "Self-test timed out" }
+          if (-not $p.WaitForExit(1200000)) { $p.Kill(); Write-Host "Self-test timed out" }
           if (Test-Path $report) { Get-Content $report } else { Write-Host "No report written"; exit 1 }
           if (-not (Select-String -Path $report -Pattern "RESULT: PASS" -Quiet)) { exit 1 }
 
-      - name: Size report
+      - name: Zip update + full packages
         shell: pwsh
         run: |
-          function Show-Sizes($path) {
-            Get-ChildItem $path | ForEach-Object {
-              $len = (Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum
-              "{0,8:N0} MB  {1}" -f ($len/1MB), $_.Name
-            } | Sort-Object -Descending | Select-Object -First 25
-          }
-          Write-Host "== dist/YTProfileManager"; Show-Sizes "dist/YTProfileManager"
-          Write-Host "== _internal"; Show-Sizes "dist/YTProfileManager/_internal"
-          Write-Host "== browser_bundle/camoufox"; Show-Sizes "dist/YTProfileManager/browser_bundle/camoufox"
-          Get-ChildItem "dist/YTProfileManager/browser_bundle/camoufox/browsers" -Directory -Recurse -Depth 2 | ForEach-Object { Write-Host "-- $($_.FullName)"; }
-          $b = Get-ChildItem "dist/YTProfileManager/browser_bundle/camoufox/browsers" -Recurse -Depth 1 -Directory | Select-Object -Last 1
-          Get-ChildItem "dist/YTProfileManager/browser_bundle/camoufox/browsers" -Recurse -Directory | Where-Object { $_.FullName -match 'browsers\\[^\\]+\\[^\\]+$' } | ForEach-Object { Write-Host "== $($_.FullName)"; Show-Sizes $_.FullName }
-          Write-Host "== largest files"
-          Get-ChildItem "dist/YTProfileManager/browser_bundle" -Recurse -File | Sort-Object Length -Descending | Select-Object -First 25 | ForEach-Object { "{0,8:N0} MB  {1}" -f ($_.Length/1MB), $_.FullName.Substring($_.FullName.IndexOf('browser_bundle')) }
-          Write-Host "== googleapiclient largest"
-          Get-ChildItem "dist/YTProfileManager/_internal/googleapiclient" -Recurse -File | Measure-Object Length -Sum | ForEach-Object { "{0} files" -f $_.Count }
-
-      - name: Zip
-        shell: pwsh
-        run: |
-          7z a -tzip -mx=5 YTProfileManager-windows.zip ./dist/YTProfileManager | Out-Null
-          Get-Item YTProfileManager-windows.zip | Select-Object Name, @{n="MB";e={[math]::Round($_.Length/1MB)}}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: YTProfileManager-windows
-          path: YTProfileManager-windows.zip
-          retention-days: 14
+          7z a -tzip -mx=5 YTProfileManager-update-windows.zip ./dist/YTProfileManager | Out-Null
+          Move-Item staging/browser_bundle dist/YTProfileManager/browser_bundle
+          7z a -tzip -mx=5 YTProfileManager-full-windows.zip ./dist/YTProfileManager | Out-Null
+          Get-Item *.zip | ForEach-Object { "{0}  {1:N0} MB" -f $_.Name, ($_.Length/1MB) }
 
       - name: Publish release
         if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[no release]')
         shell: pwsh
         run: |
           $tag = "v1.0.${{ github.run_number }}"
-          gh release create $tag YTProfileManager-windows.zip `
-            --title "YT Profile Manager $tag" `
-            --notes "Download YTProfileManager-windows.zip, unzip, put client_secret.json next to YTProfileManager.exe, and run it. See GUIDE_BANGLA.txt."
+          $notes = @"
+          **New PC (first install):** download **YTProfileManager-full-windows.zip** (includes the browser).
+
+          **PC that already has YT Profile Manager:** download **YTProfileManager-update-windows.zip** (much smaller), and replace the old folder's files. Keep client_secret.json.
+
+          Setup guide: GUIDE_BANGLA.txt inside the zip.
+          "@
+          gh release create $tag YTProfileManager-full-windows.zip YTProfileManager-update-windows.zip `
+            --title "YT Profile Manager $tag" --notes $notes
 
       - name: Upload self-test report on failure
         if: failure()

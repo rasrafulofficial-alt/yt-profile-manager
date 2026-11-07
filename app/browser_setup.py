@@ -58,10 +58,25 @@ def setup() -> None:
         os.replace(tmp, dest)
         (dest / _MARKER).write_text(bid, encoding="utf-8")
         return
-    # running from source: download (same as `camoufox fetch`)
+    # No bundle (update package / running from source): download the browser
+    # build this program version is pinned to (same as `camoufox fetch`).
+    import sys
     from camoufox.__main__ import cli
+    saved = sys.stdout, sys.stderr
+    log = open(config.DATA_DIR / "browser_download.log", "a", encoding="utf-8")
+    if sys.stdout is None:
+        sys.stdout = log
+    if sys.stderr is None:
+        sys.stderr = log
     try:
         cli(["fetch"], standalone_mode=False)
     except SystemExit as e:
         if e.code not in (0, None):
-            raise RuntimeError("Browser download failed") from e
+            raise RuntimeError("Browser download failed. Check the internet and try again "
+                               "(GitHub may limit downloads: wait an hour if many PCs "
+                               "downloaded at once).") from e
+    finally:
+        sys.stdout, sys.stderr = saved
+        log.close()
+    if needs_setup():
+        raise RuntimeError("Browser download did not finish. Please try again.")
