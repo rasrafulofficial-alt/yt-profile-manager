@@ -85,6 +85,13 @@ jobs:
           Write-Host "== dist/YTProfileManager"; Show-Sizes "dist/YTProfileManager"
           Write-Host "== _internal"; Show-Sizes "dist/YTProfileManager/_internal"
           Write-Host "== browser_bundle/camoufox"; Show-Sizes "dist/YTProfileManager/browser_bundle/camoufox"
+          Get-ChildItem "dist/YTProfileManager/browser_bundle/camoufox/browsers" -Directory -Recurse -Depth 2 | ForEach-Object { Write-Host "-- $($_.FullName)"; }
+          $b = Get-ChildItem "dist/YTProfileManager/browser_bundle/camoufox/browsers" -Recurse -Depth 1 -Directory | Select-Object -Last 1
+          Get-ChildItem "dist/YTProfileManager/browser_bundle/camoufox/browsers" -Recurse -Directory | Where-Object { $_.FullName -match 'browsers\\[^\\]+\\[^\\]+$' } | ForEach-Object { Write-Host "== $($_.FullName)"; Show-Sizes $_.FullName }
+          Write-Host "== largest files"
+          Get-ChildItem "dist/YTProfileManager/browser_bundle" -Recurse -File | Sort-Object Length -Descending | Select-Object -First 25 | ForEach-Object { "{0,8:N0} MB  {1}" -f ($_.Length/1MB), $_.FullName.Substring($_.FullName.IndexOf('browser_bundle')) }
+          Write-Host "== googleapiclient largest"
+          Get-ChildItem "dist/YTProfileManager/_internal/googleapiclient" -Recurse -File | Measure-Object Length -Sum | ForEach-Object { "{0} files" -f $_.Count }
 
       - name: Zip
         shell: pwsh
