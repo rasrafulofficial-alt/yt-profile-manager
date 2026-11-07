@@ -127,9 +127,8 @@ def fingerprint_summary(fp: dict) -> str:
     try:
         nav = fp.get("navigator", {})
         scr = fp.get("screen", {})
-        gpu = (fp.get("webgl") or {}).get("renderer") or (fp.get("gpuInfo") or {}).get("renderer") or ""
-        return (f"{nav.get('platform', '?')} | {scr.get('width', '?')}x{scr.get('height', '?')}"
-                + (f" | {str(gpu)[:60]}" if gpu else ""))
+        os_name = {"Win32": "Windows", "MacIntel": "macOS"}.get(nav.get("platform"), nav.get("platform", "?"))
+        return f"{os_name} device, fixed fingerprint (created once, never changes)"
     except Exception:
         return "-"
 

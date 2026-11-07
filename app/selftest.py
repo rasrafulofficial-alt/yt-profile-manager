@@ -48,9 +48,11 @@ def run(report_path: str) -> int:
                 page = ctx.pages[0] if ctx.pages else ctx.new_page()
                 page.goto("https://example.com", timeout=60000)
                 if round_ == 1:
-                    ctx.add_cookies([{"name": "ytpm", "value": "keep-me",
-                                      "domain": "example.com", "path": "/",
-                                      "expires": 4102444800}])
+                    page.evaluate("""() => {
+                        document.cookie = 'ytpm=keep-me; max-age=31536000; path=/; SameSite=Lax; Secure';
+                        localStorage.setItem('ytpm', 'keep-me-too');
+                    }""")
+                    log("set in page: " + page.evaluate("() => document.cookie"))
                 info = page.evaluate("""() => ({ua: navigator.userAgent,
                     w: screen.width, h: screen.height,
                     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -59,13 +61,19 @@ def run(report_path: str) -> int:
                         const e = c.getExtension('WEBGL_debug_renderer_info');
                         return c.getParameter(e.UNMASKED_RENDERER_WEBGL); } catch (x) { return 'n/a'; } })()
                     })""")
-                cookies = [c["value"] for c in ctx.cookies("https://example.com") if c["name"] == "ytpm"]
-                info["cookie"] = cookies[0] if cookies else None
+                info["cookie"] = page.evaluate(
+                    "() => (document.cookie.match(/ytpm=([^;]+)/) || [])[1] || null")
+                info["local_storage"] = page.evaluate("() => localStorage.getItem('ytpm')")
                 log(f"launch {round_}: {json.dumps(info)}")
                 seen.append(info)
         if seen[1]["cookie"] != "keep-me":
             ok = False
             log("FAIL: cookie did not survive restart")
+        if seen[1]["local_storage"] != "keep-me-too":
+            ok = False
+            log("FAIL: localStorage did not survive restart")
+        files = sorted(str(p.relative_to(udd)) for p in udd.rglob("*") if p.is_file())
+        log(f"profile files ({len(files)}): " + ", ".join(f for f in files if "cookie" in f or "storage" in f)[:600])
         for k in ("ua", "w", "h", "gl"):
             if seen[0][k] != seen[1][k]:
                 ok = False
