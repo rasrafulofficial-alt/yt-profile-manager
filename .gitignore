@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+dist/
+*.spec
+client_secret*.json
+google_token.json
+selftest.txt

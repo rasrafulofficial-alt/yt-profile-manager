@@ -1,0 +1,119 @@
+﻿=====================================================
+   YT Profile Manager — সেটআপ ও ব্যবহারের গাইড
+=====================================================
+
+এটা কী?
+--------
+প্রতিটা YouTube চ্যানেলের জন্য আলাদা ব্রাউজার প্রোফাইল। প্রতিটা প্রোফাইলের নিজস্ব
+fingerprint (device পরিচয়), proxy, cookie ও login থাকে। সব ডাটা অফিসের Gmail-এর
+Google Drive-এ encrypted হয়ে সেভ হয়। যেকোনো PC-তে একই Gmail দিয়ে login করলেই
+সব চ্যানেল হুবহু চলে আসে।
+
+
+ধাপ ১ — Google Cloud সেটআপ (শুধু একবার, ১৫ মিনিট)
+---------------------------------------------------
+এটা থেকে "client_secret.json" নামে একটা ফাইল পাবেন। এটা ছাড়া Gmail login কাজ করবে না।
+
+ 1. https://console.cloud.google.com এ যান, অফিসের Gmail দিয়ে login করুন।
+ 2. উপরে প্রজেক্ট লিস্ট থেকে "New Project" → নাম দিন: YT Profile Manager → Create।
+ 3. বাম মেনু → "APIs & Services" → "Library" → সার্চ করুন "Google Drive API"
+    → "Enable" চাপুন।
+ 4. বাম মেনু → "Google Auth Platform" (বা "OAuth consent screen") → "Get started":
+      - App name: YT Profile Manager
+      - User support email: আপনার Gmail
+      - Audience: External
+      - Contact email: আপনার Gmail
+      - Agree → Create
+ 5. "Audience" পেজে যান → "Test users" এ অফিসের Gmail যোগ করুন (Add users)।
+    তারপর একই পেজে "Publish app" চাপুন (প্রতি ৭ দিন পর পর আবার login চাওয়া বন্ধ হবে)।
+    Google যদি verification চায়, তাহলে Publish করবেন না — Testing অবস্থাতেই চলবে,
+    শুধু মাঝে মাঝে আবার "Sign in with Google" করতে হতে পারে।
+ 6. "Clients" → "Create client":
+      - Application type: Desktop app
+      - Name: YT Profile Manager → Create
+      - "Download JSON" চাপুন।
+ 7. ডাউনলোড হওয়া ফাইলের নাম বদলে রাখুন:  client_secret.json
+    এবং ফাইলটা এই ফোল্ডারে রাখুন (যেখানে main.py আছে)।
+
+ গুরুত্বপূর্ণ: সব PC-তে এই একই client_secret.json ফাইল রাখতে হবে।
+ নতুন ফাইল বানালে আগের PC-গুলোর ডাটা দেখা যাবে না।
+
+
+ধাপ ২ — প্রতিটা PC-তে ইনস্টল
+------------------------------
+ 1. পুরো "YTProfileManager" ফোল্ডারটা PC-তে কপি করুন (যেমন D:\YTProfileManager)।
+    ফোল্ডারে client_secret.json আছে কিনা দেখে নিন।
+ 2. "Install.bat" এ ডাবল-ক্লিক করুন। ইন্টারনেট লাগবে, ৫–১০ মিনিট সময় নেবে।
+    (Python না থাকলে নিজেই ইনস্টল করে নেবে।)
+ 3. শেষ হলে Desktop-এ "YT Profile Manager" শর্টকাট পাবেন।
+
+
+ধাপ ৩ — প্রথমবার চালানো
+------------------------
+ 1. Desktop শর্টকাট থেকে অ্যাপ খুলুন → "Sign in with Google"।
+ 2. অফিসের Gmail বেছে নিন। "Google hasn't verified this app" দেখালে:
+    "Advanced" → "Go to YT Profile Manager" → Continue।
+ 3. প্রথম PC-তে একটা Master Password বানাতে বলবে।
+      - কমপক্ষে ৮ অক্ষর।
+      - সব PC-তে এই একই password লাগবে।
+      - ভুলে গেলে Drive-এর ডাটা আর খোলা যাবে না! কোথাও লিখে নিরাপদে রাখুন।
+ 4. অন্য PC-গুলোতে একই Gmail দিয়ে login করে একই password দিন। সব প্রোফাইল চলে আসবে।
+
+
+প্রতিদিনের ব্যবহার
+-------------------
+ • "+ New profile": চ্যানেলের নাম, group, proxy দিন। "Check" চাপলে proxy কাজ
+   করছে কিনা আর কোন দেশের IP দেখাবে।
+ • "Create many": একসাথে অনেক প্রোফাইল। প্রতি লাইনে একটা proxy দিন।
+ • "▶ Open": ব্রাউজার খুলবে। প্রথমবার YouTube/Gmail-এ login করুন।
+ • কাজ শেষে ব্রাউজারের উইন্ডো সাধারণভাবে বন্ধ করুন (বা অ্যাপে "Stop")।
+   তখন সব কিছু অটো Google Drive-এ upload হবে। "saved to Google Drive ✓" দেখা
+   পর্যন্ত PC বন্ধ করবেন না।
+ • ডান-ক্লিক মেনু: Edit, Check proxy, Unlock, Delete ইত্যাদি।
+
+Proxy যে ফরম্যাটে দেওয়া যাবে:
+   host:port
+   host:port:user:pass
+   user:pass@host:port
+   http://user:pass@host:port
+   socks5://host:port        (socks5-এ username/password সাপোর্ট নেই — http ব্যবহার করুন)
+
+
+জরুরি নিয়ম (চ্যানেলের নিরাপত্তার জন্য)
+---------------------------------------
+ 1. একটা প্রোফাইল একসাথে দুই PC-তে খুলবেন না। অ্যাপ নিজেই আটকাবে
+    ("In use on another PC")।
+ 2. প্রতিটা চ্যানেলে একটা স্থির proxy রাখুন, ঘন ঘন বদলাবেন না। Timezone আর ভাষা
+    proxy-র দেশ অনুযায়ী অটো সেট হয়।
+ 3. "New fingerprint" শুধু খুব দরকার হলে করুন — YouTube এটাকে নতুন device হিসেবে দেখবে।
+ 4. "Unlock" শুধু তখনই করুন যখন অন্য PC বন্ধ বা crash করেছে।
+
+
+কী হুবহু থাকে, কী থাকে না
+--------------------------
+ হুবহু একই থাকে: browser version, user-agent, screen, WebGL/GPU, fonts, canvas,
+ audio, language, timezone, proxy, cookie, login, history, YouTube storage।
+
+ PC অনুযায়ী বদলায়: CPU core সংখ্যা (navigator.hardwareConcurrency)। এটা ইচ্ছাকৃত —
+ নকল core সংখ্যা ওয়েবসাইট মেপে ধরে ফেলতে পারে, তাই আসল সংখ্যাটাই দেখানো হয়।
+
+ Settings-এ "Max screen size" অফিসের সবচেয়ে ছোট মনিটরের সমান রাখুন। ছোট মনিটরে
+ ব্রাউজার উইন্ডো স্ক্রিনের বাইরে চলে যেতে পারে।
+
+
+সমস্যা হলে
+-----------
+ • অ্যাপ খুলছে না → "Start_Debug.bat" চালান, কালো উইন্ডোতে error দেখা যাবে।
+ • "client_secret.json not found" → ধাপ ১ দেখুন, ফাইলটা main.py-র পাশে রাখুন।
+ • "Could not reach the internet through the proxy" → proxy নষ্ট বা ভুল। Check চাপুন।
+ • "In use on another PC" অথচ ওই PC বন্ধ → ৫ মিনিট পরে নিজে থেকে ঠিক হবে,
+   অথবা ডান-ক্লিক → Unlock।
+ • Upload ব্যর্থ হলে ডাটা এই PC-তে নিরাপদে থাকে। পরের বার এই PC থেকে প্রোফাইল
+   খুললে আগে upload হবে।
+ • লগ ফাইল: %LOCALAPPDATA%\YTProfileManager\app.log
+
+
+আপডেট
+------
+ নতুন ভার্সন পেলে পুরনো ফোল্ডারের ফাইলগুলো বদলে দিন (client_secret.json রেখে দিন)
+ এবং Install.bat আবার চালান। সব PC-তে একই ভার্সন রাখবেন।
