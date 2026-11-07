@@ -32,8 +32,10 @@ Google Drive-এ encrypted হয়ে সেভ হয়। যেকোন�
       - Application type: Desktop app
       - Name: YT Profile Manager → Create
       - "Download JSON" চাপুন।
- 7. ডাউনলোড হওয়া ফাইলের নাম বদলে রাখুন:  client_secret.json
-    এবং ফাইলটা YTProfileManager.exe-এর পাশে রাখুন।
+ 7. ফাইলটা Downloads ফোল্ডারে থাকলেই চলবে, অ্যাপ নিজেই খুঁজে নেবে। নাম বদলাতে হবে না।
+    (না পেলে অ্যাপে "Select client_secret file..." চেপে ফাইলটা দেখিয়ে দিন।)
+    একবার পেলে অ্যাপ নিজের কাছে কপি রেখে দেয়। অন্য PC-তে এই একই ফাইল দিতে হবে —
+    পেনড্রাইভ বা নিজের ইমেইলে পাঠিয়ে নিন। (ফাইলটা গোপন রাখুন, বাইরের কাউকে দেবেন না।)
 
  গুরুত্বপূর্ণ: সব PC-তে এই একই client_secret.json ফাইল রাখতে হবে।
  নতুন ফাইল বানালে আগের PC-গুলোর ডাটা দেখা যাবে না।
@@ -44,7 +46,7 @@ Google Drive-এ encrypted হয়ে সেভ হয়। যেকোন�
  1. GitHub repo-র "Releases" থেকে সবচেয়ে নতুন YTProfileManager-full-windows.zip নামান
     (নতুন PC-র জন্য "full" — এতে ব্রাউজার সহ সব আছে, প্রায় ১.৪ GB)।
  2. Unzip করে "YTProfileManager" ফোল্ডারটা কোথাও রাখুন (যেমন D:\YTProfileManager)।
- 3. ধাপ ১-এর client_secret.json ফাইলটা YTProfileManager.exe-এর পাশে রাখুন।
+ 3. ধাপ ১-এর client_secret ফাইলটা Downloads ফোল্ডারে বা YTProfileManager.exe-এর পাশে রাখুন।
  4. YTProfileManager.exe-এ ডান-ক্লিক → Send to → Desktop (create shortcut)।
  5. প্রথমবার চালালে Windows "Windows protected your PC" দেখাতে পারে:
     "More info" → "Run anyway"।

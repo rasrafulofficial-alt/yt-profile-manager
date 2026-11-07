@@ -52,9 +52,10 @@ def sign_in_interactive():
     """Opens the normal browser for 'Sign in with Google'."""
     from google_auth_oauthlib.flow import InstalledAppFlow
 
-    if not config.CLIENT_SECRET_FILE.exists():
-        raise MissingClientSecret(str(config.CLIENT_SECRET_FILE))
-    flow = InstalledAppFlow.from_client_secrets_file(str(config.CLIENT_SECRET_FILE), config.GOOGLE_SCOPES)
+    secret = config.find_client_secret()
+    if not secret:
+        raise MissingClientSecret("client_secret file not found")
+    flow = InstalledAppFlow.from_client_secrets_file(str(secret), config.GOOGLE_SCOPES)
     creds = flow.run_local_server(
         port=0,
         prompt="select_account",

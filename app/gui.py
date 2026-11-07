@@ -28,6 +28,7 @@ QPushButton:hover { background: #343947; }
 QPushButton:disabled { color: #6b7080; }
 QPushButton#primary { background: #e0262e; border-color: #e0262e; color: white; font-weight: 600; }
 QPushButton#primary:hover { background: #f03a42; }
+QPushButton#primary:disabled { background: #3a2a2d; border-color: #3a2a2d; color: #8b6b70; }
 QPushButton#stop { background: #3a2a2d; border-color: #6b2f35; color: #ff9aa0; }
 QLineEdit, QPlainTextEdit, QComboBox, QSpinBox { background: #0f1115; border: 1px solid #353a45;
     border-radius: 6px; padding: 5px; selection-background-color: #e0262e; }
@@ -330,7 +331,16 @@ class LoginWidget(QWidget):
         self.info.setObjectName("muted")
         self.info.setAlignment(Qt.AlignCenter)
         self.info.setWordWrap(True)
+        self.info.setTextFormat(Qt.RichText)
+        self.info.setOpenExternalLinks(True)
         lay.addWidget(self.info)
+        self.pick_btn = QPushButton("  Select client_secret file...  ")
+        self.pick_btn.setVisible(False)
+        prow = QHBoxLayout()
+        prow.addStretch()
+        prow.addWidget(self.pick_btn)
+        prow.addStretch()
+        lay.addLayout(prow)
         lay.addStretch()
 
 
@@ -358,21 +368,43 @@ class MainWindow(QMainWindow):
         self._pending_error: dict = {}
 
         self.login = LoginWidget(self.do_sign_in)
+        self.login.pick_btn.clicked.connect(self.pick_client_secret)
         self.setCentralWidget(self.login)
         QTimer.singleShot(100, self.startup)
 
     # ---------------- auth flow
     def startup(self):
-        if not config.CLIENT_SECRET_FILE.exists():
+        if not config.find_client_secret():
             self.login.btn.setEnabled(False)
+            self.login.pick_btn.setVisible(True)
             self.login.info.setText(
-                f"<span style='color:#ff9aa0'>client_secret.json not found.</span><br>"
-                f"Put it in this folder:<br><b>{config.APP_DIR}</b><br>then restart the app "
-                f"(see the guide, step 1).")
+                "<span style='color:#ff9aa0'>Google client file (client_secret) not found.</span><br>"
+                "Create it once in Google Cloud (see GUIDE_BANGLA.txt, step 1), download the JSON,<br>"
+                "then click the button below and choose it. (Files in your Downloads folder are "
+                "found automatically.)")
             return
+        self.login.pick_btn.setVisible(False)
+        self.login.btn.setEnabled(True)
         self.login.info.setText("Checking saved login...")
         run_bg(drive.load_credentials, on_done=self._got_creds,
                on_error=lambda e: self.login.info.setText(""))
+
+    def pick_client_secret(self):
+        from PySide6.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Choose the downloaded client_secret file", str(Path.home() / "Downloads"),
+            "Google client file (*.json);;All files (*)")
+        if not path:
+            return
+        try:
+            config.import_client_secret(path)
+        except config.BadClientSecret as e:
+            QMessageBox.warning(self, "Wrong file", str(e))
+            return
+        except OSError as e:
+            show_error(self, "Could not copy the file", e)
+            return
+        self.startup()
 
     def do_sign_in(self):
         self.login.btn.setEnabled(False)

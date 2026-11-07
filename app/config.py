@@ -30,6 +30,63 @@ SETTINGS_FILE = DATA_DIR / "settings.json"
 LOG_FILE = DATA_DIR / "app.log"
 
 CLIENT_SECRET_FILE = APP_DIR / "client_secret.json"
+# Copy kept in the app's data folder (always writable, survives app updates)
+SAVED_CLIENT_SECRET = DATA_DIR / "client_secret.json"
+
+
+class BadClientSecret(Exception):
+    pass
+
+
+def check_client_secret(path) -> None:
+    """Raise BadClientSecret with a clear message if the file is not a Desktop-app client."""
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    except Exception:
+        raise BadClientSecret("This is not a valid client_secret JSON file.")
+    if "web" in data:
+        raise BadClientSecret("This client was created as 'Web application'. In Google Cloud, "
+                              "create a new client with Application type = 'Desktop app'.")
+    if "installed" not in data or not data["installed"].get("client_id"):
+        raise BadClientSecret("This is not a Google OAuth client file (Desktop app).")
+
+
+def _candidates():
+    yield CLIENT_SECRET_FILE
+    yield from sorted(APP_DIR.glob("client_secret*.json"))  # long Google name, or .json.json
+    yield SAVED_CLIENT_SECRET
+    downloads = Path.home() / "Downloads"
+    try:
+        yield from sorted(downloads.glob("client_secret*.json"),
+                          key=lambda p: p.stat().st_mtime, reverse=True)
+    except OSError:
+        pass
+
+
+def find_client_secret():
+    """Path of a usable client secret, or None. A file found elsewhere is
+    copied into the app's data folder so it keeps working after updates."""
+    import shutil
+    for p in _candidates():
+        try:
+            if not p.is_file():
+                continue
+            check_client_secret(p)
+        except (BadClientSecret, OSError):
+            continue
+        if p != SAVED_CLIENT_SECRET:
+            try:
+                shutil.copyfile(p, SAVED_CLIENT_SECRET)
+            except OSError:
+                return p
+        return SAVED_CLIENT_SECRET
+    return None
+
+
+def import_client_secret(path) -> None:
+    import shutil
+    check_client_secret(path)
+    shutil.copyfile(path, SAVED_CLIENT_SECRET)
 
 GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/drive.appdata",
