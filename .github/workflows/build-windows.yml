@@ -73,6 +73,19 @@ jobs:
           if (Test-Path $report) { Get-Content $report } else { Write-Host "No report written"; exit 1 }
           if (-not (Select-String -Path $report -Pattern "RESULT: PASS" -Quiet)) { exit 1 }
 
+      - name: Size report
+        shell: pwsh
+        run: |
+          function Show-Sizes($path) {
+            Get-ChildItem $path | ForEach-Object {
+              $len = (Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum
+              "{0,8:N0} MB  {1}" -f ($len/1MB), $_.Name
+            } | Sort-Object -Descending | Select-Object -First 25
+          }
+          Write-Host "== dist/YTProfileManager"; Show-Sizes "dist/YTProfileManager"
+          Write-Host "== _internal"; Show-Sizes "dist/YTProfileManager/_internal"
+          Write-Host "== browser_bundle/camoufox"; Show-Sizes "dist/YTProfileManager/browser_bundle/camoufox"
+
       - name: Zip
         shell: pwsh
         run: |
@@ -86,6 +99,7 @@ jobs:
           retention-days: 14
 
       - name: Publish release
+        if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[no release]')
         shell: pwsh
         run: |
           $tag = "v1.0.${{ github.run_number }}"

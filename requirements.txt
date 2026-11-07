@@ -1,7 +1,7 @@
 # Versions are pinned on purpose: every office PC must run the SAME browser
 # version, otherwise the fingerprint would look different on different PCs.
 camoufox[geoip]==0.5.9
-PySide6>=6.6
+PySide6-Essentials>=6.6   # Qt without the huge WebEngine/3D add-ons
 google-auth-oauthlib>=1.2
 google-api-python-client>=2.100
 cryptography>=42
